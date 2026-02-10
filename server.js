@@ -6,10 +6,17 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
+/* ✅ VERY IMPORTANT HOME ROUTE */
+app.get("/", (req, res) => {
+  res.send("Stranger Chat Backend Running ✅");
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
-  cors: { origin: "*" },
+  cors: {
+    origin: "*",
+  },
 });
 
 let waitingUser = null;
@@ -17,10 +24,8 @@ let waitingUser = null;
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // 🔥 JOIN CHAT (called when user clicks Start)
   socket.on("join", () => {
 
-    // If someone already waiting, match them
     if (waitingUser && waitingUser.id !== socket.id) {
 
       socket.partner = waitingUser;
@@ -36,22 +41,16 @@ io.on("connection", (socket) => {
     }
   });
 
-  // 🔥 MESSAGE
   socket.on("message", (msg) => {
-    if (socket.partner) {
-      socket.partner.emit("message", msg);
-    }
+    socket.partner?.emit("message", msg);
   });
 
-  // 🔥 STOP / DISCONNECT
   const cleanup = () => {
 
-    // If user was waiting
     if (waitingUser?.id === socket.id) {
       waitingUser = null;
     }
 
-    // If user had a partner
     if (socket.partner) {
       socket.partner.emit("stranger-left");
       socket.partner.partner = null;
@@ -59,24 +58,14 @@ io.on("connection", (socket) => {
     }
   };
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-    cleanup();
-  });
-
-  socket.on("stop", () => {
-    cleanup();
-  });
+  socket.on("disconnect", cleanup);
+  socket.on("stop", cleanup);
 });
 
-server.listen(5000, () => {
-  console.log("🚀 Server running on port 5000");
+
+/* ✅ CRITICAL FOR RENDER */
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
-
-app.use((req, res , next) => {
-
-}
-
-)
-
-module.exports = app
