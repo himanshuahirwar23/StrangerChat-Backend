@@ -72,3 +72,11 @@ io.on("connection", (socket) => {
 server.listen(5000, () => {
   console.log("🚀 Server running on port 5000");
 });
+
+app.use((req, res , next) => {
+
+}
+
+)
+
+module.exports = app
